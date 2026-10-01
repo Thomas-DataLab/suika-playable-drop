@@ -1,0 +1,30 @@
+{
+  "name": "suika-merge-drop",
+  "version": "1.0.0",
+  "description": "Viral Suika Fruit Physics Merge Puzzle Game - Multi-Channel Web & Android Ready",
+  "main": "src/game.js",
+  "scripts": {
+    "test": "node -e \"const fs = require('fs'), { execFileSync } = require('child_process'); const files = [...fs.readdirSync('src').map(f => 'src/' + f), ...fs.readdirSync('scripts').map(f => 'scripts/' + f)].filter(f => f.endsWith('.js')); execFileSync('node', ['-c', ...files], { stdio: 'inherit' }); console.log('All JS files passed syntax check.');\"",
+    "package": "node scripts/package-all.js",
+    "build:android": "node scripts/package-all.js && npx cap sync android",
+    "cap:open": "npx cap open android"
+  },
+  "keywords": [
+    "suika",
+    "watermelon-game",
+    "physics-puzzle",
+    "html5-game",
+    "poki",
+    "crazygames",
+    "youtube-playables",
+    "capacitor",
+    "android"
+  ],
+  "author": "Minh Tu",
+  "license": "Commercial",
+  "devDependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  }
+}

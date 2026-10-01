@@ -1,0 +1,5 @@
+node_modules/
+android/
+build-output/
+.DS_Store
+Thumbs.db
