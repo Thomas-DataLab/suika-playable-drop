@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0d1117">
+  <title>Suika Merge Drop</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="game-wrapper" role="main">
+    <!-- Top HUD Header -->
+    <header class="game-header">
+      <div class="brand-section">
+        <h1 class="game-title">SUIKA</h1>
+        <span class="game-subtitle">MERGE DROP</span>
+      </div>
+
+      <div class="stats-group">
+        <div class="stat-card" title="Current Score">
+          <div class="stat-label">Score</div>
+          <div id="score-val" class="stat-value">0</div>
+        </div>
+
+        <div class="stat-card" title="High Score">
+          <div class="stat-label">Best</div>
+          <div id="high-val" class="stat-value high-score">0</div>
+        </div>
+      </div>
+
+      <!-- Next Fruit Preview -->
+      <div class="preview-card" title="Next Fruit">
+        <div class="preview-label">NEXT</div>
+        <canvas id="next-canvas" width="70" height="70" aria-label="Next fruit preview"></canvas>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-group">
+        <button id="btn-sound" class="icon-btn" aria-label="Toggle Sound" title="Toggle Sound">
+          <span class="icon">&#128266;</span>
+        </button>
+        <button id="btn-restart" class="icon-btn" aria-label="Restart Game" title="Restart Game">
+          <span class="icon">&#8635;</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Danger Indicator Overlay -->
+    <div id="danger-indicator" role="alert" aria-live="polite">
+      <span class="danger-text">&#9888; OVERFLOW WARNING &#9888;</span>
+      <div class="danger-bar-wrapper">
+        <div id="danger-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Playfield Canvas Wrapper -->
+    <div class="canvas-wrapper">
+      <canvas id="game-canvas" width="480" height="800" aria-label="Suika game play area"></canvas>
+
+      <!-- Game Over Modal Overlay -->
+      <div id="game-over-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-card">
+          <div class="modal-icon">&#127817;</div>
+          <h2 id="modal-title" class="modal-title">GAME OVER</h2>
+          <div class="score-display-group">
+            <div class="modal-score-row">
+              <span>Score</span>
+              <span id="final-score" class="score-num">0</span>
+            </div>
+            <div class="modal-score-row">
+              <span>Personal Best</span>
+              <span id="final-best" class="best-num">0</span>
+            </div>
+          </div>
+          <button id="btn-restart-modal" class="btn-primary" aria-label="Play Again">PLAY AGAIN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Fruit Evolution Guide Bar -->
+    <footer class="fruit-guide-bar" aria-label="Fruit Evolution Guide" title="Fruit Evolution Guide">
+      <div class="guide-fruit" style="background:#e74c3c; width:12px; height:12px;" title="Cherry"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#ff4757; width:13px; height:13px;" title="Strawberry"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#9b59b6; width:14px; height:14px;" title="Grape"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#ffa502; width:15px; height:15px;" title="Orange"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#ff6348; width:16px; height:16px;" title="Persimmon"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#2ed573; width:17px; height:17px;" title="Apple"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#eccc68; width:18px; height:18px;" title="Pear"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#ff7f50; width:19px; height:19px;" title="Peach"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#f1c40f; width:20px; height:20px;" title="Pineapple"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#1dd1a1; width:21px; height:21px;" title="Melon"></div>
+      <span class="guide-arrow">&rsaquo;</span>
+      <div class="guide-fruit" style="background:#10ac84; width:23px; height:23px;" title="Watermelon"></div>
+    </footer>
+  </main>
+
+  <!-- Game Scripts (Self-Contained Local Vendor & Modular Source) -->
+  <script src="vendor/matter.min.js"></script>
+  <script src="src/ytplayables.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/fruits.js"></script>
+  <script src="src/particles.js"></script>
+  <script src="src/game.js"></script>
+</body>
+</html>
