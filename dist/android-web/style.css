@@ -1,15 +1,16 @@
 /* Modern Dark Arcade Glassmorphism UI for Suika Merge Drop */
 :root {
-  --bg-color: #0d1117;
-  --panel-bg: rgba(22, 27, 34, 0.75);
-  --panel-border: rgba(255, 255, 255, 0.12);
+  --bg-color: #0b0f19;
+  --panel-bg: rgba(18, 24, 38, 0.78);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --panel-border-glow: rgba(241, 196, 15, 0.28);
   --text-main: #f0f6fc;
   --text-dim: #8b949e;
   --accent-gold: #f1c40f;
   --accent-green: #2ed573;
   --accent-red: #ff4757;
   --accent-blue: #3867d6;
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -27,9 +28,9 @@ html, body {
   overflow: hidden;
   background-color: var(--bg-color);
   background-image: 
-    radial-gradient(circle at 50% 10%, rgba(46, 213, 115, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(56, 103, 214, 0.1) 0%, transparent 45%),
-    radial-gradient(circle at 20% 90%, rgba(255, 71, 87, 0.08) 0%, transparent 40%);
+    radial-gradient(circle at 50% 8%, rgba(46, 213, 115, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, rgba(56, 103, 214, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 15% 85%, rgba(255, 71, 87, 0.1) 0%, transparent 40%);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: var(--text-main);
   display: flex;
@@ -69,7 +70,7 @@ html, body {
 }
 
 .game-title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 900;
   letter-spacing: 1px;
   background: linear-gradient(135deg, #ffd32a 0%, #ff4757 60%, #2ed573 100%);
@@ -81,9 +82,9 @@ html, body {
 
 .game-subtitle {
   font-size: 0.65rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.6px;
   color: var(--text-dim);
 }
 
@@ -95,14 +96,19 @@ html, body {
 
 .stat-card {
   background: var(--panel-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
-  padding: 4px 8px;
-  min-width: 60px;
+  border-radius: 12px;
+  padding: 5px 9px;
+  min-width: 62px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--panel-border-glow);
 }
 
 .stat-label {
@@ -110,12 +116,12 @@ html, body {
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-dim);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 
 .stat-value {
   font-size: 1.05rem;
-  font-weight: 800;
+  font-weight: 900;
   color: var(--accent-gold);
   line-height: 1.2;
 }
@@ -130,19 +136,24 @@ html, body {
   flex-direction: column;
   align-items: center;
   background: var(--panel-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 3px 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: border-color 0.2s ease;
+}
+
+.preview-card:hover {
+  border-color: var(--panel-border-glow);
 }
 
 .preview-label {
   font-size: 0.55rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-dim);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 
 #next-canvas {
@@ -150,39 +161,41 @@ html, body {
   height: 32px;
 }
 
-/* Header Buttons */
+/* Header Buttons with Juicy Press Feedback */
 .controls-group {
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
 
 .icon-btn {
   background: var(--panel-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--text-main);
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   outline: none;
-  font-size: 1rem;
-  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 1.05rem;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 18px rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
 }
 
 .icon-btn:active {
-  transform: translateY(1px) scale(0.96);
+  transform: translateY(2px) scale(0.94);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 /* Danger Indicator Banner */
@@ -191,16 +204,16 @@ html, body {
   top: 60px;
   left: 20px;
   right: 20px;
-  background: rgba(255, 71, 87, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 8px;
-  padding: 4px 8px;
+  background: rgba(255, 71, 87, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 12px;
+  padding: 5px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 15;
-  box-shadow: 0 0 20px rgba(255, 71, 87, 0.6);
+  box-shadow: 0 0 24px rgba(255, 71, 87, 0.65);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-8px);
@@ -216,22 +229,23 @@ html, body {
 
 @keyframes pulse-danger {
   0% { box-shadow: 0 0 12px rgba(255, 71, 87, 0.5); }
-  100% { box-shadow: 0 0 24px rgba(255, 71, 87, 0.9); }
+  100% { box-shadow: 0 0 28px rgba(255, 71, 87, 0.95); }
 }
 
 .danger-text {
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 900;
   color: #fff;
   letter-spacing: 1px;
   text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 .danger-bar-wrapper {
   width: 100%;
-  height: 4px;
+  height: 5px;
   background: rgba(0, 0, 0, 0.35);
-  border-radius: 2px;
+  border-radius: 3px;
   margin-top: 3px;
   overflow: hidden;
 }
@@ -239,8 +253,8 @@ html, body {
 #danger-bar-fill {
   width: 0%;
   height: 100%;
-  background: #ffffff;
-  border-radius: 2px;
+  background: linear-gradient(90deg, #ffd32a 0%, #ffffff 100%);
+  border-radius: 3px;
   transition: width 0.1s linear;
 }
 
@@ -265,13 +279,58 @@ html, body {
   filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
 }
 
+/* Onboarding Tutorial DOM Overlay */
+.tutorial-overlay {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.tutorial-overlay.visible {
+  opacity: 1;
+}
+
+.tutorial-hand {
+  font-size: 1.8rem;
+  animation: tutorial-bounce 1.5s infinite ease-in-out;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+}
+
+@keyframes tutorial-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+.tutorial-badge {
+  margin-top: 6px;
+  background: rgba(18, 24, 38, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(241, 196, 15, 0.65);
+  color: var(--accent-gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 5px 14px;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
 /* Modals & Overlays */
 .modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(13, 17, 23, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -286,14 +345,14 @@ html, body {
 }
 
 .modal-card {
-  background: rgba(30, 39, 46, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(26, 34, 52, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 20px;
   padding: 24px 28px;
   width: 85%;
   max-width: 340px;
   text-align: center;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 24px rgba(255, 71, 87, 0.25);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 28px rgba(255, 71, 87, 0.25);
   transform: scale(1);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -303,11 +362,11 @@ html, body {
 }
 
 .modal-title {
-  font-size: 1.8rem;
+  font-size: 1.85rem;
   font-weight: 900;
   letter-spacing: 1px;
   color: var(--accent-red);
-  text-shadow: 0 2px 16px rgba(255, 71, 87, 0.4);
+  text-shadow: 0 2px 18px rgba(255, 71, 87, 0.45);
   margin-bottom: 6px;
 }
 
@@ -333,10 +392,10 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.32);
+  padding: 9px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .modal-score-row span:first-child {
@@ -346,14 +405,14 @@ html, body {
 }
 
 .modal-score-row .score-num {
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: 1.45rem;
+  font-weight: 900;
   color: var(--accent-gold);
 }
 
 .modal-score-row .best-num {
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: 1.45rem;
+  font-weight: 900;
   color: var(--accent-green);
 }
 
@@ -370,24 +429,26 @@ html, body {
   letter-spacing: 0.5px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(46, 213, 115, 0.4);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
   outline: none;
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.12);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(46, 213, 115, 0.5);
+  box-shadow: 0 8px 24px rgba(46, 213, 115, 0.55);
 }
 
 .btn-primary:active {
-  transform: translateY(1px);
+  transform: translateY(2px) scale(0.96);
+  box-shadow: 0 2px 8px rgba(46, 213, 115, 0.3);
 }
-/* Secondary Action Buttons (e.g. Rewarded Ad) */
+
+/* Secondary Action Buttons (Rewarded Ad Revive) */
 .btn-secondary {
   width: 100%;
   padding: 13px 20px;
-  border: 1px solid rgba(255, 165, 2, 0.4);
+  border: 1px solid rgba(255, 165, 2, 0.45);
   border-radius: 14px;
   background: linear-gradient(135deg, #ffa502 0%, #ff7f50 100%);
   color: #ffffff;
@@ -395,8 +456,8 @@ html, body {
   font-weight: 800;
   letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(255, 165, 2, 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 6px 20px rgba(255, 165, 2, 0.38);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
   outline: none;
   margin-bottom: 10px;
   display: flex;
@@ -406,13 +467,14 @@ html, body {
 }
 
 .btn-secondary:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.12);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 165, 2, 0.45);
+  box-shadow: 0 8px 24px rgba(255, 165, 2, 0.5);
 }
 
 .btn-secondary:active {
-  transform: translateY(1px);
+  transform: translateY(2px) scale(0.96);
+  box-shadow: 0 2px 8px rgba(255, 165, 2, 0.3);
 }
 
 /* Footer Fruit Guide */
@@ -423,12 +485,13 @@ html, body {
   justify-content: center;
   gap: 4px;
   margin-top: 6px;
-  padding: 4px 6px;
+  padding: 5px 8px;
   background: var(--panel-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--panel-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .guide-fruit {
@@ -438,7 +501,12 @@ html, body {
   border-radius: 50%;
   width: 16px;
   height: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.guide-fruit:hover {
+  transform: scale(1.25);
 }
 
 .guide-arrow {

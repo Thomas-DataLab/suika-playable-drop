@@ -59,6 +59,12 @@
     <div class="canvas-wrapper">
       <canvas id="game-canvas" width="480" height="800" aria-label="Suika game play area"></canvas>
 
+      <!-- Onboarding Tutorial Hint -->
+      <div id="tutorial-hint" class="tutorial-overlay" aria-hidden="true">
+        <div class="tutorial-hand">&#128070;</div>
+        <div class="tutorial-badge">Drag to aim &bull; Release to drop</div>
+      </div>
+
       <!-- Game Over Modal Overlay -->
       <div id="game-over-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-card">

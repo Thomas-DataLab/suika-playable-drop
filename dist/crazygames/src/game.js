@@ -1,7 +1,8 @@
 /**
  * Suika Merge Drop - Core Game Engine
  * Physics with Matter.js, aiming & dropping, collision merge, combo system,
- * danger line detection, and game over lifecycle.
+ * danger line detection, squash-and-stretch deformation, screen shake,
+ * animated score rolling, and onboarding tutorial hints.
  */
 (function(window) {
   'use strict';
@@ -35,6 +36,7 @@
       // Game state
       this.fruits = []; // track active fruit bodies
       this.score = 0;
+      this.displayedScore = 0;
       this.highScore = 0;
       this.comboCount = 0;
       this.lastMergeTime = 0;
@@ -47,6 +49,16 @@
       this.isPointerDown = false;
       this.lastDropTime = 0;
       this.canDrop = true;
+
+      // Onboarding tutorial state
+      this.hasDismissedTutorial = false;
+      this.tutorialAlpha = 1.0;
+      try {
+        this.hasDismissedTutorial = localStorage.getItem('suika_tutorial_done') === 'true';
+        if (this.hasDismissedTutorial) this.tutorialAlpha = 0;
+      } catch (e) {
+        this.hasDismissedTutorial = false;
+      }
 
       // Danger state
       this.dangerTimer = 0; // in seconds
@@ -164,7 +176,7 @@
 
     updateScoreUI() {
       if (this.ui.scoreVal) {
-        this.ui.scoreVal.textContent = this.score;
+        this.ui.scoreVal.textContent = this.displayedScore;
       }
       if (this.ui.highVal) {
         this.ui.highVal.textContent = this.highScore;
@@ -183,7 +195,7 @@
       });
       this.world = this.engine.world;
 
-      // Container Walls: Left, Right, Bottom, Top Stopper
+      // Container Walls: Left, Right, Bottom
       const ground = Bodies.rectangle(
         GAME_WIDTH / 2,
         CONTAINER_BOTTOM + WALL_THICKNESS / 2,
@@ -230,8 +242,51 @@
         const pairs = event.pairs;
         for (let i = 0; i < pairs.length; i++) {
           const { bodyA, bodyB } = pairs[i];
+
+          // 1. Fruit to Fruit Collisions
           if (bodyA.isFruit && bodyB.isFruit) {
+            // Calculate relative collision speed for impact squash & sound
+            const relVx = bodyA.velocity.x - bodyB.velocity.x;
+            const relVy = bodyA.velocity.y - bodyB.velocity.y;
+            const impactSpeed = Math.hypot(relVx, relVy);
+
+            if (impactSpeed > 2.2) {
+              const squashAmt = Math.min(1.35, 1.0 + impactSpeed * 0.035);
+              if (window.SuikaFruits) {
+                window.SuikaFruits.applySquash(bodyA, squashAmt, 1 / squashAmt);
+                window.SuikaFruits.applySquash(bodyB, squashAmt, 1 / squashAmt);
+              }
+              if (window.SoundManager) {
+                window.SoundManager.playImpact(impactSpeed);
+              }
+            }
+
+            bodyA.hasLanded = true;
+            bodyB.hasLanded = true;
+
+            // Handle potential tier merge
             this.handleFruitCollision(bodyA, bodyB);
+          }
+          // 2. Fruit to Floor or Wall Collisions
+          else if (bodyA.isFruit || bodyB.isFruit) {
+            const fruitBody = bodyA.isFruit ? bodyA : bodyB;
+            const wallBody = bodyA.isFruit ? bodyB : bodyA;
+            fruitBody.hasLanded = true;
+
+            const speed = Math.hypot(fruitBody.velocity.x, fruitBody.velocity.y);
+            if (speed > 2.0) {
+              const squashAmt = Math.min(1.32, 1.0 + speed * 0.03);
+              if (window.SuikaFruits) {
+                if (wallBody.label === 'ground') {
+                  window.SuikaFruits.applySquash(fruitBody, squashAmt, 1 / squashAmt);
+                } else {
+                  window.SuikaFruits.applySquash(fruitBody, 1 / squashAmt, squashAmt);
+                }
+              }
+              if (window.SoundManager) {
+                window.SoundManager.playImpact(speed);
+              }
+            }
           }
         }
       });
@@ -281,7 +336,14 @@
 
         // Spawn new upgraded fruit body
         const newBody = this.createFruitBody(m.x, m.y, nextTier);
+        newBody.hasLanded = true;
         Matter.Body.setVelocity(newBody, { x: m.vx, y: m.vy });
+
+        // Apply a gentle squash on spawn
+        if (window.SuikaFruits) {
+          window.SuikaFruits.applySquash(newBody, 1.25, 0.82);
+        }
+
         Matter.World.add(this.world, newBody);
         this.fruits.push(newBody);
 
@@ -292,20 +354,28 @@
 
         this.score += awardedPoints;
         this.saveHighScore();
-        this.updateScoreUI();
 
-        // Audio pop
+        // Audio pop with tier-scaled harmonics
         if (window.SoundManager) {
           window.SoundManager.playMerge(nextTier, this.comboCount);
         }
 
-        // Particle explosion & floating score text
+        // Screen Shake for impactful high-tier merges (Apple tier 6 and above)
         if (window.SuikaParticles) {
-          window.SuikaParticles.burst(m.x, m.y, fruitInfo.color, 18);
-          const popupText = this.comboCount > 1
-            ? `+${awardedPoints} x${this.comboCount}!`
-            : `+${awardedPoints}`;
-          window.SuikaParticles.addPopup(m.x, m.y, popupText, fruitInfo.color, this.comboCount > 1 ? 1.3 : 1.0);
+          if (nextTier >= 6) {
+            const intensity = Math.min(6.5, 2.5 + (nextTier - 6) * 0.8);
+            const duration = 160 + (nextTier - 6) * 20;
+            window.SuikaParticles.shake(intensity, duration);
+          }
+          if (nextTier === 11) {
+            window.SuikaParticles.shake(7.0, 320);
+          }
+
+          // Juicy fruit splatter & expanding shockwave ring
+          window.SuikaParticles.juiceSplatter(m.x, m.y, fruitInfo.color, nextTier);
+
+          // Bouncy combo banners & floating points
+          window.SuikaParticles.addComboPopup(m.x, m.y, nextTier, this.comboCount, awardedPoints);
         }
 
         // Celebratory event on major milestones (Watermelon tier 11 or 5x combo)
@@ -335,6 +405,11 @@
       body.fruitRadius = radius;
       body.spawnTime = performance.now();
       body.isMerging = false;
+      body.hasLanded = false;
+      body.squashX = 1.0;
+      body.squashY = 1.0;
+      body.squashVx = 0;
+      body.squashVy = 0;
 
       return body;
     }
@@ -369,7 +444,6 @@
       ctx.clearRect(0, 0, 70, 70);
 
       const fruitInfo = window.SuikaFruits.get(this.nextTier);
-      // Scale down slightly if needed to comfortably fit in preview box
       const previewScale = Math.min(1.0, 24 / fruitInfo.radius);
       ctx.save();
       ctx.translate(35, 35);
@@ -385,8 +459,20 @@
         return (clientX - rect.left) * scaleX;
       };
 
+      const dismissTutorial = () => {
+        if (!this.hasDismissedTutorial) {
+          this.hasDismissedTutorial = true;
+          try {
+            localStorage.setItem('suika_tutorial_done', 'true');
+          } catch (e) {
+            // ignore
+          }
+        }
+      };
+
       const handlePointerDown = (e) => {
         if (this.isGameOver) return;
+        dismissTutorial();
         this.isPointerDown = true;
         const x = getCanvasX(e.clientX || (e.touches && e.touches[0].clientX));
         this.updateAimX(x);
@@ -404,6 +490,7 @@
         if (this.isGameOver) return;
         if (!this.isPointerDown) return;
         this.isPointerDown = false;
+        dismissTutorial();
         this.tryDropCurrentFruit();
       };
 
@@ -437,8 +524,12 @@
       const now = performance.now();
       if (now - this.lastDropTime < DROP_COOLDOWN_MS) return;
 
-      const fruitInfo = window.SuikaFruits.get(this.currentTier);
       const body = this.createFruitBody(this.aimX, DROP_Y, this.currentTier);
+
+      // Add slight initial stretch when dropping
+      if (window.SuikaFruits) {
+        window.SuikaFruits.applySquash(body, 0.85, 1.22);
+      }
 
       Matter.World.add(this.world, body);
       this.fruits.push(body);
@@ -470,7 +561,6 @@
         if (body.isMerging) continue;
 
         const age = (now - body.spawnTime) / 1000;
-        // Fruit must be dropped > 1.5s ago and settled (low velocity)
         if (age > 1.5) {
           const speed = body.speed;
           const topY = body.position.y - body.fruitRadius;
@@ -538,16 +628,38 @@
       } else if (window.YTPlayables) {
         window.YTPlayables.requestInterstitialAd();
       }
-      // Show Game Over Modal
-      if (this.ui.finalScore) {
-        this.ui.finalScore.textContent = this.score;
-      }
-      if (this.ui.finalBest) {
-        this.ui.finalBest.textContent = this.highScore;
-      }
+
+      // Show Game Over Modal with rapid score ticker animation
       if (this.ui.gameOverModal) {
         this.ui.gameOverModal.classList.remove('hidden');
       }
+
+      this.animateModalScore(this.score, this.highScore);
+    }
+
+    animateModalScore(targetScore, bestScore) {
+      if (!this.ui.finalScore) return;
+      let current = 0;
+      const duration = 800; // ms
+      const startTime = performance.now();
+
+      const tick = (now) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(1.0, elapsed / duration);
+        // Ease out quad
+        const eased = 1 - (1 - progress) * (1 - progress);
+        current = Math.round(eased * targetScore);
+        if (this.ui.finalScore) {
+          this.ui.finalScore.textContent = current;
+        }
+        if (progress < 1.0) {
+          requestAnimationFrame(tick);
+        } else {
+          if (this.ui.finalScore) this.ui.finalScore.textContent = targetScore;
+          if (this.ui.finalBest) this.ui.finalBest.textContent = bestScore;
+        }
+      };
+      requestAnimationFrame(tick);
     }
 
     requestRevive() {
@@ -613,6 +725,7 @@
 
       // Reset state
       this.score = 0;
+      this.displayedScore = 0;
       this.comboCount = 0;
       this.dangerTimer = 0;
       this.isDangerActive = false;
@@ -644,47 +757,113 @@
       const dt = Math.min(0.05, (timestamp - this.lastFrameTime) / 1000);
       this.lastFrameTime = timestamp;
 
-      // 1. Physics Step
+      // 1. Smooth score counter animation
+      if (this.displayedScore < this.score) {
+        const diff = this.score - this.displayedScore;
+        const step = Math.max(1, Math.ceil(diff * 0.16));
+        this.displayedScore = Math.min(this.score, this.displayedScore + step);
+        if (this.ui.scoreVal) {
+          this.ui.scoreVal.textContent = this.displayedScore;
+        }
+      }
+
+      // 2. Physics Step
       if (!this.isGameOver) {
         Matter.Engine.update(this.engine, dt * 1000);
         this.processPendingMerges();
         this.checkDangerAndGameOver(dt);
       }
 
-      // 2. Particle Update
+      // 3. Update squash spring physics on each fruit body
+      if (window.SuikaFruits) {
+        for (let i = 0; i < this.fruits.length; i++) {
+          window.SuikaFruits.updateSquash(this.fruits[i]);
+        }
+      }
+
+      // 4. Particle & Screen Shake Update
       if (window.SuikaParticles) {
         window.SuikaParticles.update();
       }
 
-      // 3. Render Canvas
-      this.draw();
+      // 5. Update tutorial hint fadeout
+      if (this.hasDismissedTutorial && this.tutorialAlpha > 0) {
+        this.tutorialAlpha = Math.max(0, this.tutorialAlpha - dt * 2.5);
+      }
+
+      // 6. Render Canvas
+      this.draw(timestamp);
 
       requestAnimationFrame((t) => this.renderLoop(t));
     }
 
-    draw() {
+    draw(timestamp = 0) {
       const ctx = this.ctx;
       ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-      // Draw Container Background & Floor/Walls
+      // Get screen shake translation offset
+      let shakeX = 0;
+      let shakeY = 0;
+      if (window.SuikaParticles) {
+        const offset = window.SuikaParticles.getShakeOffset();
+        shakeX = offset.x;
+        shakeY = offset.y;
+      }
+
+      ctx.save();
+      if (shakeX !== 0 || shakeY !== 0) {
+        ctx.translate(shakeX, shakeY);
+      }
+
+      // 1. Draw Container Background & Floor/Walls
       this.drawContainer(ctx);
 
-      // Draw Danger Warning Line
+      // 2. Draw Danger Warning Line
       this.drawDangerLine(ctx);
 
-      // Draw Aiming Guide Line and Dropper Preview Fruit (if active)
+      // 3. Draw Aiming Guide Line and Dropper Preview Fruit (if active)
       if (!this.isGameOver) {
         this.drawAimGuide(ctx);
       }
 
-      // Draw Active Fruits
+      // 4. Draw Active Fruits with Kawaii Dynamic Expressions & Eye Tracking
+      const now = performance.now();
       const blinkTime = Date.now();
+
       for (let i = 0; i < this.fruits.length; i++) {
         const body = this.fruits[i];
         if (body.isMerging) continue;
 
         // Occasional blinking kawaii eyes based on fruit id seed
         const isBlinking = ((blinkTime + body.id * 850) % 3600) < 160;
+
+        // Expression selection logic
+        let expression = 'normal';
+        if (now - body.spawnTime < 650 && body.tier > 1) {
+          expression = 'merging_happy';
+        } else if (body.position.y < 180 || (this.isDangerActive && body.position.y < 230)) {
+          expression = 'danger_worried';
+        } else if (body.velocity.y > 3.6 && !body.hasLanded) {
+          expression = 'dropping';
+        }
+
+        // Eye tracking: glance toward nearest same-tier fruit (within 160px) or drop target
+        let targetX = this.aimX;
+        let targetY = DROP_Y;
+        let closestDist = 160;
+
+        for (let j = 0; j < this.fruits.length; j++) {
+          const other = this.fruits[j];
+          if (other !== body && other.tier === body.tier && !other.isMerging) {
+            const dist = Math.hypot(other.position.x - body.position.x, other.position.y - body.position.y);
+            if (dist < closestDist) {
+              closestDist = dist;
+              targetX = other.position.x;
+              targetY = other.position.y;
+            }
+          }
+        }
+
         window.SuikaFruits.drawFruit(
           ctx,
           body.position.x,
@@ -692,14 +871,71 @@
           body.fruitRadius,
           body.tier,
           body.angle,
-          { isBlinking }
+          {
+            squashX: body.squashX || 1.0,
+            squashY: body.squashY || 1.0,
+            expression: expression,
+            isBlinking: isBlinking,
+            eyeTargetX: targetX,
+            eyeTargetY: targetY
+          }
         );
       }
 
-      // Draw Particle System & Floating Text on top
+      // 5. Draw Particle System & Floating Text on top of fruits
       if (window.SuikaParticles) {
         window.SuikaParticles.draw(ctx);
       }
+
+      // 6. Draw Onboarding Tutorial Hint (if not permanently dismissed)
+      if (this.tutorialAlpha > 0) {
+        this.drawOnboardingTutorial(ctx, timestamp);
+      }
+
+      ctx.restore();
+    }
+
+    drawOnboardingTutorial(ctx, timestamp) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, this.tutorialAlpha));
+
+      // Oscillating hand / arrow movement
+      const wave = Math.sin(timestamp * 0.0035);
+      const handX = (CONTAINER_LEFT + CONTAINER_RIGHT) / 2 + wave * 75;
+      const handY = DROP_Y + 70;
+
+      // Aiming hand indicator icon
+      ctx.font = '28px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('\uD83D\uDC46', handX, handY); // pointing hand up 👆
+
+      // Rounded glassmorphism tutorial pill banner
+      const bannerY = handY + 38;
+      const bannerText = 'Drag to aim \u2022 Release to drop';
+      ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      const textMetrics = ctx.measureText(bannerText);
+      const bannerW = textMetrics.width + 28;
+      const bannerH = 28;
+      const bannerX = (CONTAINER_LEFT + CONTAINER_RIGHT) / 2 - bannerW / 2;
+
+      ctx.fillStyle = 'rgba(22, 27, 34, 0.88)';
+      ctx.strokeStyle = 'rgba(255, 211, 42, 0.65)';
+      ctx.lineWidth = 1.5;
+
+      // Rounded rectangle
+      ctx.beginPath();
+      ctx.roundRect
+        ? ctx.roundRect(bannerX, bannerY - bannerH / 2, bannerW, bannerH, 14)
+        : ctx.rect(bannerX, bannerY - bannerH / 2, bannerW, bannerH);
+      ctx.fill();
+      ctx.stroke();
+
+      // Banner text
+      ctx.fillStyle = '#ffd32a';
+      ctx.fillText(bannerText, (CONTAINER_LEFT + CONTAINER_RIGHT) / 2, bannerY);
+
+      ctx.restore();
     }
 
     drawContainer(ctx) {
@@ -727,16 +963,16 @@
       ctx.stroke();
 
       // Bottom corner neon accents
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(CONTAINER_LEFT + 2, CONTAINER_BOTTOM - 15);
+      ctx.moveTo(CONTAINER_LEFT + 2, CONTAINER_BOTTOM - 16);
       ctx.lineTo(CONTAINER_LEFT + 2, CONTAINER_BOTTOM - 2);
-      ctx.lineTo(CONTAINER_LEFT + 15, CONTAINER_BOTTOM - 2);
+      ctx.lineTo(CONTAINER_LEFT + 16, CONTAINER_BOTTOM - 2);
 
-      ctx.moveTo(CONTAINER_RIGHT - 2, CONTAINER_BOTTOM - 15);
+      ctx.moveTo(CONTAINER_RIGHT - 2, CONTAINER_BOTTOM - 16);
       ctx.lineTo(CONTAINER_RIGHT - 2, CONTAINER_BOTTOM - 2);
-      ctx.lineTo(CONTAINER_RIGHT - 15, CONTAINER_BOTTOM - 2);
+      ctx.lineTo(CONTAINER_RIGHT - 16, CONTAINER_BOTTOM - 2);
       ctx.stroke();
 
       ctx.restore();
@@ -768,7 +1004,7 @@
       ctx.save();
 
       // 1. Dotted vertical drop guide line
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
       ctx.lineWidth = 2;
       ctx.setLineDash([6, 6]);
 
@@ -780,7 +1016,7 @@
 
       // 2. Ghost/Drop Fruit preview at top
       const canDropNow = performance.now() - this.lastDropTime >= DROP_COOLDOWN_MS;
-      ctx.globalAlpha = canDropNow ? 0.95 : 0.45;
+      ctx.globalAlpha = canDropNow ? 0.96 : 0.45;
       window.SuikaFruits.drawFruit(ctx, this.aimX, DROP_Y, r, this.currentTier, 0);
 
       ctx.restore();
